@@ -17,7 +17,7 @@ from api.v1.views.auth.serializer import LoginSerializer
 class UserCreateView(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.create_user('dev', 'admin@inventorymanager.dev', 'admin')
+        user = User.objects.create_user('dev', 'admin@dgit.dev', 'admin')
         user.first_name = 'Dev'
         user.last_name = 'Admin'
         user.save()

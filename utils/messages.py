@@ -2,7 +2,9 @@ from django.utils.translation import gettext as _
 
 MESSAGE = {
 
-'created': _('{id} Created Successfully'),
+'created': _('Created Successfully'),
+
+'err_create_repo': _('Error creating repository'),
 
 'bad_request': _('Bad Request'),
 

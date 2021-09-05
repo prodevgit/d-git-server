@@ -45,8 +45,11 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'api',
-    'branch',
+    'access_control',
     'dgit',
+    'email',
+    'scripts',
+    'utils'
 
 ]
 
@@ -90,6 +93,16 @@ environ.Env.read_env()
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = env('EMAIL_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_PASS')
+FROM_EMAIL = 'DGit <no-reply@dgit.dev>'
+EMAIL_TEMPLATE = BASE_DIR / 'email/templates'
 
 DATABASES = {
     'default': {

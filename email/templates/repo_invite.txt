@@ -1,19 +1,20 @@
 <div style="max-width:600px;margin:50px auto;padding:0 12px">
     <div class="m_-1931231161305542174card" style="background:white;border-radius:0.5rem;padding:2rem;margin-bottom:1rem">
         <h2 style="color:#2ab27b;margin:0 0 12px;line-height:30px;font-size:1.8rem;text-align:center;color:#3a3b3c;margin:0 auto 0.75rem">
-            Welcome to <span class="il">Auraa Lite</span>!
+            Welcome to <span class="il">DGit</span>!
         </h2>
-        <p style="text-align:center">Please confirm your email address and activate your account now.</p>
+        <p style="text-align:center">Hi {{user.get_full_name}}, you've been invited to contribute to this project.</p>
         <p style="text-align:center;margin:2rem 0">
-                <a href="{{ domain }}{% url 'repository-accept-invite-api' token=token %}" style="display:inline-block;padding:14px 32px;background:#2ecc71;border-radius:4px;font-weight:700;font-size:20px;line-height:26px;color:white;text-decoration:none" target="_blank" data-saferedirecturl="{ domain }}{% url 'repository-accept-invite-api' token=token %}">Activate your account</a>
+                <a href="http://{{ domain }}{% url 'api:repository-accept-invite-api' object_id=repo token=token operation='accept' %}" style="display:inline-block;padding:14px 32px;background:#2ecc71;border-radius:4px;font-weight:700;font-size:20px;line-height:26px;color:white;text-decoration:none" target="_blank" data-saferedirecturl="http://{ domain }}{% url 'api:repository-accept-invite-api' object_id=repo token=token operation='accept' %}">Accept</a>
+                <a href="http://{{ domain }}{% url 'api:repository-accept-invite-api' object_id=repo token=token operation='reject' %}" style="display:inline-block;padding:14px 32px;background:#2ecc71;border-radius:4px;font-weight:700;font-size:20px;line-height:26px;color:white;text-decoration:none" target="_blank" data-saferedirecturl="http://{ domain }}{% url 'api:repository-accept-invite-api' object_id=repo token=token operation='reject' %}">Reject</a>
         </p>
         <hr style="margin:1.5rem 0;width:100%;border:none;border-bottom:1px solid #ececec">
-        <p>Looking for some help? shoot us an email at <a href="mailto:developer@auraa.com" style="font-weight:bold;color:#2ecc71" target="_blank">developer@<span class="il"></span>auraa.com</a>.</p>
+        <p>Looking for some help? shoot us an email at <a href="mailto:prodevonline@gmail.com" style="font-weight:bold;color:#2ecc71" target="_blank">developer@<span class="il"></span>dgit.dev</a>.</p>
         <p>
           Hope you'll have a good time!
         </p>
         <p>
-          <strong>&mdash; Team <span class="il">Auraa</span></strong>
+          <strong>&mdash; Team <span class="il">DGit</span></strong>
         </p>
     </div>
 </div>

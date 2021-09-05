@@ -7,10 +7,10 @@ from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from access_control.models import Policy, RepositoryPermission, Role
+from access_control.models import Policy, RepositoryPermission, Role, RepositoryInvite
 from api.v1.views.repository.serializer import RepositoryCreateSerializer, RepositoryListSerializer, \
     RepositoryDetailSerializer
-from dgit.constants import ROLE_OWNER
+from dgit.constants import ROLE_OWNER, ROLE_DEVELOPER
 from dgit.models import DGitRepository
 from utils.functions import send_email
 from utils.messages import MESSAGE
@@ -72,32 +72,86 @@ class RepositoryListView(ListAPIView):
 class RepositoryAddMemberView(APIView):
 
     def post(self, request, *args, **kwargs):
-       data = {}
-       object_id = kwargs.get('object_id')
-       member_id = request.data.get('member')
-       member = User.objects.get(id=member_id)
-       member_token = Token.objects.get(user=member)
+        data = {}
+        try:
+            object_id = kwargs.get('object_id')
+            member_id = request.data.get('member')
+            member = User.objects.get(id=member_id)
+            member_token = Token.objects.get(user=member)
 
-       subject = 'DGit - Project Access'
-       message = f"""Hi {member.get_full_name()}, you've been invited to contribute to this project.
-                    
-                    """
+            body_vars = {
+               'user': member,
+               'repo': object_id,
+               'domain': get_current_site(request),
+               'token': member_token.key,
+               'settings': settings
+            }
+            header = {
+               'subject': 'DGit - Project Access',
+               'to': [member.email],
+               'template_name': 'repo_invite'
+            }
+            repository_invite = RepositoryInvite.objects.filter(user=member,repository=object_id).first()
+            if repository_invite:
+                data['status'] = False
+                if repository_invite.accepted:
+                    data['message'] = MESSAGE.get('repo_member_already').format(user=member.get_full_name())
+                else:
+                    data['message'] = MESSAGE.get('repo_invite_already')
+            else:
+                send_email(header, body_vars)
+                repository_invite = RepositoryInvite.objects.create(user=member,repository=object_id)
+                data['status'] = True
+                data['message'] = MESSAGE.get('repo_invite')
+        except Exception as e:
+            print(e)
+            data['status'] = False
+            data['message'] = MESSAGE.get('something_wrong')
+        return Response(data=data)
 
-       email_from = settings.EMAIL_HOST_USER
-       recipient_list = [member.email, ]
+class RepositoryAcceptInviteView(APIView):
+    authentication_classes = []
+    permission_classes = []
 
+    def post(self, request, *args, **kwargs):
+        data = {}
+        token = Token.objects.filter(key=kwargs.get('token')).first()
+        if token:
+            member = token.user
+            repository_object_id = kwargs.get('object_id')
+            repository_invite = RepositoryInvite.objects.filter(user=member,repository=repository_object_id).first()
+            if repository_invite and repository_invite.expired == False:
+                operation = kwargs.get('operation')
+                if operation == 'accept':
+                    repository_invite.accepted = True
+                    repository_invite.expired = True
+                    repository_invite.save()
+                    dev_role = Role.objects.get(role=ROLE_DEVELOPER)
+                    repository_permission = RepositoryPermission.objects.create(
+                        role=dev_role,
+                        user=member,
+                        is_read=True,
+                        is_write=True,
+                        is_merge=False,
+                        is_delete=False
+                    )
+                    repository = DGitRepository.objects.get(object_id=repository_object_id)
+                    repository.policy.permissions.add(repository_permission)
+                    repository.members.add(member)
+                    repository.save()
+                    data['status'] = True
+                    data['message'] = MESSAGE.get('repo_invite_accept')
+                elif operation == 'reject':
+                    repository_invite.rejected = True
+                    repository_invite.expired = True
+                    repository_invite.save()
+                    data['status'] = True
+                    data['message'] = MESSAGE.get('repo_invite_reject')
+                else:
+                    data['status'] = False
+                    data['message'] = MESSAGE.get('repo_invite_operation_invalid')
+            else:
+                data['status'] = False
+                data['message'] = MESSAGE.get('repo_invite_expired')
 
-       body_vars = {
-           'user': member,
-           'domain':get_current_site(request),
-           'token': member_token.key,
-           'settings': settings
-       }
-       header = {
-           'subject': 'DGit - Project Access',
-           'to': [member.email],
-           'template_name': 'repo_invite'
-       }
-       send_email(header, body_vars)
-
-       return Response(data=data)
+        return Response(data=data)

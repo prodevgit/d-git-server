@@ -10,6 +10,7 @@ from django.db import models
 #     (4, 'Delete')
 # )
 
+
 REPOSITORY_ROLES = (
     (1, 'Owner'),
     (2, 'Manager'),
@@ -20,6 +21,7 @@ REPOSITORY_ROLES = (
 class Policy(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,
                                  default=uuid.uuid4, verbose_name='Public identifier')
+
     created = models.DateTimeField(auto_now_add=True, blank=True)
     permissions = models.ManyToManyField('RepositoryPermission')
 
@@ -43,3 +45,12 @@ class RepositoryPermission(models.Model):
     is_write = models.BooleanField(default=False)
     is_merge = models.BooleanField(default=False)
     is_delete = models.BooleanField(default=False)
+
+class RepositoryInvite(models.Model):
+    accepted = models.BooleanField(default=False)
+    rejected = models.BooleanField(default=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                              related_name="%(app_label)s_%(class)s_created", null=True)
+    repository = models.CharField(max_length=50)
+    created = models.DateTimeField(auto_now_add=True, blank=True)
+    expired = models.BooleanField(default=False)

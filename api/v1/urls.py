@@ -9,7 +9,7 @@ urlpatterns = [
 
     path('repository/create', views.RepositoryCreateView.as_view(), name='repository-create-api'),
     path('repository/list', views.RepositoryListView.as_view(), name='repository-list-api'),
-    path('repository/accept-invite/<token>', views.RepositoryListView.as_view(), name='repository-accept-invite-api'),
+    path('repository/accept-invite/<object_id>/<token>/<operation>', views.RepositoryAcceptInviteView.as_view(), name='repository-accept-invite-api'),
     path('repository/<str:object_id>/detail', views.RepositoryDetailView.as_view(), name='repository-detail-api'),
     path('repository/<str:object_id>/addmember', views.RepositoryAddMemberView.as_view(), name='repository-addmember-api'),
 ]

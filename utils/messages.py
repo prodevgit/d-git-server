@@ -4,6 +4,20 @@ MESSAGE = {
 
 'created': _('Created Successfully'),
 
+'repo_invite': _('Repository invite sent'),
+
+'repo_invite_already': _('Repository invite sent already'),
+
+'repo_invite_expired': _('Repository invite expired'),
+
+'repo_invite_accept': _('Repository invite accepted'),
+
+'repo_invite_reject': _('Repository invite rejected'),
+
+'repo_invite_operation_invalid': _('Repository invite operation invalid'),
+
+'repo_member_already': _('{user} is already a contributor in this repository'),
+
 'err_create_repo': _('Error creating repository'),
 
 'bad_request': _('Bad Request'),

@@ -21,23 +21,12 @@ def send_email(header, body_var, requested_for=None):
         headers_data = header.get('reply-to', [])
     try:
         msg = EmailMessage(
-            settings.EMAIL_HEADER.format(header["subject"]),
-            template,
-            from_email=settings.FROM_EMAIL,
-            to=header["to"],
-            cc=header.get('cc', []),
-            bcc=[],
-            headers=headers_data
-
-        )
-
-
-        message = EmailMessage(
             header["subject"],
             template,
             from_email=settings.FROM_EMAIL,
             to=header["to"],
             headers=headers_data
+
         )
 
         if header.get("file_path", None):

@@ -77,7 +77,10 @@ class RepositoryAddMemberView(APIView):
             object_id = kwargs.get('object_id')
             member_id = request.data.get('member')
             member = User.objects.get(id=member_id)
-            member_token = Token.objects.get(user=member)
+            try:
+                member_token = Token.objects.get(user=member)
+            except:
+                member_token = Token.objects.create(user=member)
 
             body_vars = {
                'user': member,
@@ -92,7 +95,7 @@ class RepositoryAddMemberView(APIView):
                'template_name': 'repo_invite'
             }
             repository_invite = RepositoryInvite.objects.filter(user=member,repository=object_id).first()
-            if repository_invite:
+            if repository_invite and not repository_invite.expired:
                 data['status'] = False
                 if repository_invite.accepted:
                     data['message'] = MESSAGE.get('repo_member_already').format(user=member.get_full_name())
@@ -119,8 +122,8 @@ class RepositoryAcceptInviteView(APIView):
         if token:
             member = token.user
             repository_object_id = kwargs.get('object_id')
-            repository_invite = RepositoryInvite.objects.filter(user=member,repository=repository_object_id).first()
-            if repository_invite and repository_invite.expired == False:
+            repository_invite = RepositoryInvite.objects.filter(user=member,repository=repository_object_id,expired=False).first()
+            if repository_invite and not repository_invite.expired:
                 operation = kwargs.get('operation')
                 if operation == 'accept':
                     repository_invite.accepted = True

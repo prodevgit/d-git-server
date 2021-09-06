@@ -1,7 +1,7 @@
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
-from dgit.models import DGitRepository
+from dgit.models import DGitRepository, DGitBranch
 
 
 class RepositoryCreateSerializer(ModelSerializer):
@@ -16,6 +16,7 @@ class RepositoryDetailSerializer(ModelSerializer):
     owner = SerializerMethodField()
     members = SerializerMethodField()
     policy = SerializerMethodField()
+    branches = SerializerMethodField()
 
     def get_owner(self, repository):
         owner = {}
@@ -44,6 +45,9 @@ class RepositoryDetailSerializer(ModelSerializer):
             policy_members.append(member)
         policy['members'] = policy_members
         return policy
+
+    def get_branches(self,repository):
+        branches = DGitBranch.objects.filter(repository=repository).order_by('-created')
 
     class Meta:
         model = DGitRepository

@@ -12,4 +12,6 @@ urlpatterns = [
     path('repository/accept-invite/<object_id>/<token>/<operation>', views.RepositoryAcceptInviteView.as_view(), name='repository-accept-invite-api'),
     path('repository/<str:object_id>/detail', views.RepositoryDetailView.as_view(), name='repository-detail-api'),
     path('repository/<str:object_id>/addmember', views.RepositoryAddMemberView.as_view(), name='repository-addmember-api'),
+
+    path('branch/<str:object_id>/create',views.DGitBranchCreateView.as_view(), name='branch-create-api'),
 ]

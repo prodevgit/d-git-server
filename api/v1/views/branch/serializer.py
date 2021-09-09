@@ -8,15 +8,61 @@ class DGitBranchCreateSerializer(ModelSerializer):
 
     class Meta:
         model = DGitBranch
-        exclude = ['owner','repository']
+        exclude = ['owner','repository','parent']
 
-class DGitBranchSerializer(ModelSerializer):
+class DGitBranchListSerializer(ModelSerializer):
 
-    repository = SerializerMethodField()
     owner = SerializerMethodField()
     parent = SerializerMethodField()
     sub_branches = SerializerMethodField()
 
+    def get_owner(self,branch):
+        data={}
+        data['id'] = branch.owner.id
+        data['name'] = branch.owner.get_full_name()
+        return data
+
+    def get_parent(self,branch):
+        if branch.parent:
+            data = {}
+            data['object_id'] = branch.parent.object_id
+            data['name'] = branch.parent.name
+            return data
+        else:
+            return None
+
+    def get_sub_branches(self,branch):
+        return DGitBranch.objects.filter(parent=branch).count()
+
     class Meta:
         model = DGitBranch
-        exclude = []
+        exclude = ['repository']
+
+class DGitBranchDetailSerializer(ModelSerializer):
+
+    owner = SerializerMethodField()
+    parent = SerializerMethodField()
+    sub_branches = SerializerMethodField()
+
+    def get_owner(self,branch):
+        data={}
+        data['id'] = branch.owner.id
+        data['name'] = branch.owner.get_full_name()
+        return data
+
+    def get_parent(self,branch):
+        if branch.parent:
+            data = {}
+            data['object_id'] = branch.parent.object_id
+            data['name'] = branch.parent.name
+            return data
+        else:
+            return None
+
+    def get_sub_branches(self,branch):
+        branches = DGitBranch.objects.filter(parent=branch)
+        return DGitBranchListSerializer(branches,many=True).data
+
+    class Meta:
+        model = DGitBranch
+        exclude = ['repository']

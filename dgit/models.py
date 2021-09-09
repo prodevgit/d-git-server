@@ -8,6 +8,17 @@ from django.dispatch import receiver
 from access_control.models import Policy
 
 
+class DGitRepositoryFile(models.Model):
+    object_id = models.UUIDField(unique=True, editable=False,
+                                 default=uuid.uuid4, verbose_name='Public identifier')
+    name = models.CharField(max_length=100)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                      related_name="%(app_label)s_%(class)s_owner")
+    path = models.TextField()
+    created_date = models.DateTimeField(auto_now_add=True, blank=True)
+    last_update = models.DateTimeField(auto_now_add=True, blank=True)
+    repository = models.ForeignKey('DGitRepository', on_delete=models.CASCADE,related_name="%(app_label)s_%(class)s_repository")
+
 class DGitFile(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,
                                  default=uuid.uuid4, verbose_name='Public identifier')
@@ -39,7 +50,7 @@ class DGitCommit(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                    related_name="%(app_label)s_%(class)s_owner")
     created = models.DateTimeField(auto_now_add=True, blank=True)
-    branch =  models.ForeignKey('DGitBranch', related_name='%(app_label)s_%(class)s_branch',
+    branch = models.ForeignKey('DGitBranch', related_name='%(app_label)s_%(class)s_branch',
                                     db_index=True, on_delete=models.CASCADE)
     blobs = models.ManyToManyField('DGitBlob')
     prev_commit = models.ForeignKey('DGitCommit', related_name='%(app_label)s_%(class)s_prev_commit',
@@ -52,29 +63,37 @@ class DGitBranch(models.Model):
                                    related_name="%(app_label)s_%(class)s_created", null=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                    related_name="%(app_label)s_%(class)s_created")
-    repository = models.ForeignKey('DGitRepository', on_delete=models.CASCADE,related_name="%(app_label)s_%(class)s_created")
+    repository = models.ForeignKey('DGitRepository', on_delete=models.CASCADE,related_name="%(app_label)s_%(class)s_repository")
     name = models.TextField()
+    is_root = models.BooleanField(default=False)
+    merge_status = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True, blank=True)
 
 class DGitRepository(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,
                                  default=uuid.uuid4, verbose_name='Public identifier')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                              related_name="%(app_label)s_%(class)s_created")
+                              related_name="%(app_label)s_%(class)s_owner")
     name = models.TextField()
     visibilty = models.BooleanField(null=False)
     created = models.DateTimeField(auto_now_add=True, blank=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL)
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE,
-                              related_name="%(app_label)s_%(class)s_created", null=True)
+                              related_name="%(app_label)s_%(class)s_policy", null=True)
 
 class DGitBlob(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,
                                  default=uuid.uuid4, verbose_name='Public identifier')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                              related_name="%(app_label)s_%(class)s_created")
+                              related_name="%(app_label)s_%(class)s_owner")
     name = models.TextField()
     path = models.TextField()
     created = models.DateTimeField(auto_now_add=True, blank=True)
     checksum = models.CharField(max_length=20)
     save_path = models.TextField()
+
+class RepoFileTracker(models.Model):
+    session = models.UUIDField(editable=False)
+    path = models.TextField()
+    name = models.TextField()
+    identifier = models.UUIDField(editable=False)

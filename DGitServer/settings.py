@@ -17,6 +17,8 @@ from environ import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+REPOSITORY_DIR = f'{Path(__file__).resolve().parent.parent.parent}/repositories'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -49,6 +51,7 @@ INSTALLED_APPS = [
     'dgit',
     'email',
     'scripts',
+    'ssh',
     'utils'
 
 ]
@@ -138,8 +141,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-
-
+    ),
+'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser'
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_PERMISSION_CLASSES': (

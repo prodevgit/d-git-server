@@ -4,9 +4,11 @@ import uuid
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
+from django.utils.decorators import method_decorator
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.parsers import JSONParser
@@ -17,11 +19,13 @@ from access_control.models import Policy, RepositoryPermission, Role, Repository
 from api.v1.views.repository.serializer import RepositoryCreateSerializer, RepositoryListSerializer, \
     RepositoryDetailSerializer
 from dgit.constants import ROLE_OWNER, ROLE_DEVELOPER
-from dgit.models import DGitRepository, DGitRepositoryFile, RepoFileTracker
+from dgit.models import DGitRepository, DGitRepositoryFile, RepoFileTracker, DGitBranch
 from ssh.models import SSHToken
+from utils.decorators import repo_auth
 from utils.functions import send_email
 from utils.messages import MESSAGE
 
+DEFAULT_BRANCHES = ('master','develop')
 
 class RepositoryCreateView(CreateAPIView):
     serializer_class = RepositoryCreateSerializer
@@ -47,6 +51,8 @@ class RepositoryCreateView(CreateAPIView):
             policy.save()
             repository.policy = policy
             repository.save()
+            for branch in DEFAULT_BRANCHES:
+                branch = DGitBranch.objects.create(name=branch,repository=repository,owner=self.request.user,is_root=True)
             data['status'] = True
             data['message'] = MESSAGE.get('created')
 
@@ -169,26 +175,38 @@ class RepositoryAcceptInviteView(APIView):
         return Response(data=data)
 
 class RepositoryCloneView(APIView):
-    def get(self, request, *args, **kwargs):
+    authentication_classes = []
+    permission_classes = []
+
+    @method_decorator(repo_auth)
+    def dispatch(self, *args, **kwargs):
+        return super(RepositoryCloneView, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
         data = {}
         try:
-            ssh_token = kwargs.get('ssh_token')
-            object_id = kwargs.get('object_id')
-            try:
-                ssh_token = SSHToken.objects.get(token=ssh_token)
-            except:
-                return Response("You're not authorized to clone this repository")
-
-            repository = DGitRepository.objects.filter(object_id=object_id).first()
-            files = DGitRepositoryFile.objects.get(repository=repository)
+            # ssh_token = request.META['HTTP_AUTHORIZATION']
+            # ssh_token = SSHToken.objects.get(token=ssh_token)
+            # ssh_token.is_valid = False
+            # ssh_token.save()
+        #     object_id = kwargs.get('object_id')
+        #     try:
+        #         ssh_token = SSHToken.objects.get(token=ssh_token)
+        #     except:
+        #         return Response("You're not authorized to clone this repository")
+        #
+        #     repository = DGitRepository.objects.filter(object_id=object_id).first()
+        #     files = DGitRepositoryFile.objects.get(repository=repository)
 
             data['status'] = True
-            data['message'] = MESSAGE.get('repo_invite')
+            data['message'] = 'Authorized'
+            # data['data'] =
         except Exception as e:
             print(e)
             data['status'] = False
             data['message'] = MESSAGE.get('something_wrong')
         return Response(data=data)
+
 
 class RepositoryPushView(APIView):
     def post(self, request,*args,**kwargs):
@@ -241,4 +259,21 @@ class RepositoryPushView(APIView):
             data['status'] = False
             data['message'] = MESSAGE.get('something_wrong')
         return Response(data=data)
+
+class RepositoryUnauthorizedCloneView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        data={}
+        data['status'] = False
+        data['message'] = "You don't have access to this repository"
+        return Response(data=data)
+
+    def get(self, request, *args, **kwargs):
+        data={}
+        data['status'] = False
+        data['message'] = "You don't have access to this repository"
+        return Response(data=data)
+
 

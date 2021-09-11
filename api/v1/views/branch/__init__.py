@@ -35,9 +35,11 @@ class DGitBranchCreateView(CreateAPIView):
                     branch = serializer.save(owner=self.request.user, repository=repository)
                 data['status'] = True
                 data['message'] = 'Branch created'  # Add a message giving details about branch
+                data['data'] = {'id':branch.object_id,'operation':'create'}
             else:
                 data['status'] = False
                 data['message'] = 'Branch already exist' #Add a message giving details about branch
+                data['data'] = {'id': branch.object_id, 'operation': 'exists'}
         except Exception as e:
             print(e)
             data['status'] = False

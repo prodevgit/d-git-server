@@ -1,3 +1,5 @@
+import os
+
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,7 +49,7 @@ class SSHServerCommandView(APIView):
         data = {}
         try:
             data['status'] = True
-            data['data'] = SSH_SERVER_COMMAND
+            data['data'] = os.path.join(SSH_SERVER_COMMAND)
         except:
             data['status'] = False
             data['message'] = "Command retrieval failed"

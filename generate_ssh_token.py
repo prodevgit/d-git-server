@@ -6,6 +6,3 @@ from ssh.models import SSHToken
 
 sshtoken = SSHToken.objects.create()
 print(sshtoken.token)
-
-
-

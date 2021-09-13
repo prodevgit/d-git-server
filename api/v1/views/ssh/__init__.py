@@ -49,6 +49,7 @@ class SSHServerCommandView(APIView):
         data = {}
         try:
             data['status'] = True
+            print(SSH_SERVER_COMMAND)
             data['data'] = os.path.join(SSH_SERVER_COMMAND)
         except:
             data['status'] = False

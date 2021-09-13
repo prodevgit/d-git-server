@@ -16,6 +16,8 @@ urlpatterns = [
     path('repository/push', views.RepositoryPushView.as_view(), name='repository-push-api'),
     path('repository/unauthorized-clone', views.RepositoryUnauthorizedCloneView.as_view(), name='repository-unauthorized-clone-api'),
 
+    path('ssh/server-command-retreive',views.SSHServerCommandView.as_view(), name='ssh-command-retrieval-api'),
+
     path('branch/<str:object_id>/create',views.DGitBranchCreateView.as_view(), name='branch-create-api'),
     path('branch/<str:object_id>/detail',views.DGitBranchDetailView.as_view(), name='branch-detail-api'),
     path('branch/<str:object_id>/list',views.DGitBranchListView.as_view(), name='branch-list-api'),

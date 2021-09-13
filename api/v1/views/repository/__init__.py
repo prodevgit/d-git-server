@@ -276,4 +276,3 @@ class RepositoryUnauthorizedCloneView(APIView):
         data['message'] = "You don't have access to this repository"
         return Response(data=data)
 
-

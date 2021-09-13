@@ -1,6 +1,6 @@
 def validate_ssh(key):
     import base64, struct, sys, binascii
-    array = key.split();
+    array = bytes(key,'utf-8').split();
     # Each rsa-ssh key has 3 different strings in it, first one being
     # typeofkey second one being keystring third one being username .
     if len(array) != 3:

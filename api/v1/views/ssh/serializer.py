@@ -7,4 +7,4 @@ class UserAddSSHKeySerializer(ModelSerializer):
 
     class Meta:
         model = UserSSH
-        fields = ['owner']
+        exclude = ['owner']

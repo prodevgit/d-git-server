@@ -5,4 +5,5 @@ env = environ.Env(
 )
 environ.Env.read_env()
 
+SSH_AUTHORIZED_KEYS = env('SSH_AUTHORIZED_KEYS')
 SSH_SERVER_COMMAND = env('DGIT_SSH_SERVER_COMMAND')

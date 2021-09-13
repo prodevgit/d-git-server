@@ -17,6 +17,6 @@ class UserSSH(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                               related_name="%(app_label)s_%(class)s_created")
     name = models.CharField(max_length=100)
-    key = models.CharField(max_length=128)
+    key = models.TextField()
     created = models.DateTimeField(auto_now_add=True, blank=True)
     

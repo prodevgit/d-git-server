@@ -50,7 +50,9 @@ class SSHServerCommandView(APIView):
         try:
             data['status'] = True
             print(SSH_SERVER_COMMAND)
-            data['data'] = os.system('/home/dgit/dgit_env/bin/python /home/dgit/d-git-server/generate_ssh_token.py')
+            stream = os.popen('/home/dgit/dgit_env/bin/python /home/dgit/d-git-server/generate_ssh_token.py')
+            output = stream.read()
+            data['data'] = output
         except:
             data['status'] = False
             data['message'] = "Command retrieval failed"

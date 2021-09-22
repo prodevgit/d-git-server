@@ -2,8 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from simple_history.models import HistoricalRecords
 
 from access_control.models import Policy
 
@@ -68,6 +67,7 @@ class DGitBranch(models.Model):
     is_root = models.BooleanField(default=False)
     merge_status = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True, blank=True)
+    history = HistoricalRecords()
 
 class DGitRepository(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,
@@ -80,6 +80,7 @@ class DGitRepository(models.Model):
     members = models.ManyToManyField(settings.AUTH_USER_MODEL)
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE,
                               related_name="%(app_label)s_%(class)s_policy", null=True)
+    history = HistoricalRecords()
 
 class DGitBlob(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,

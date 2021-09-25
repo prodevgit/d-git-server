@@ -1,32 +1,30 @@
-import json
 import os
+import traceback
 import uuid
-from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
 from django.utils.decorators import method_decorator
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
-from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from access_control.models import Policy, RepositoryPermission, Role, RepositoryInvite
+from DGitServer.constants import DGIT_DATA_PATH
+from DGitServer.settings import BASE_DIR
+from access_control.models import Policy, RepositoryPermission, Role, RepositoryInvite, CloneToken
 from api.v1.views.repository.serializer import RepositoryCreateSerializer, RepositoryListSerializer, \
     RepositoryDetailSerializer
 from dgit.constants import ROLE_OWNER, ROLE_DEVELOPER
-from dgit.models import DGitRepository, DGitRepositoryFile, RepoFileTracker, DGitBranch
-from ssh.models import SSHToken
+from dgit.models import DGitRepository, DGitRepositoryFile, RepoFileTracker, DGitBranch, DGitFile, DGitCommit
+
 from utils.decorators import repo_auth
 from utils.functions import send_email
 from utils.messages import MESSAGE
 
 DEFAULT_BRANCHES = ('master','develop')
-
+DEFAULT_FILES = ('.dgitignore','readme.md')
 class RepositoryCreateView(CreateAPIView):
     serializer_class = RepositoryCreateSerializer
 
@@ -35,6 +33,11 @@ class RepositoryCreateView(CreateAPIView):
         try:
             repository_name = self.request.data.get('name')
             repository_name=repository_name.replace(' ','-').lower()
+            repository_count = DGitRepository.objects.filter(name=repository_name,owner=self.request.user).count()
+            if repository_count:
+                data['status'] = False
+                data['message'] = MESSAGE.get('err_create_repo')
+                return data
             repository = serializer.save(name=repository_name,owner=self.request.user)
             repository.members.add(self.request.user)
             owner_role = Role.objects.get(role=ROLE_OWNER)
@@ -53,6 +56,23 @@ class RepositoryCreateView(CreateAPIView):
             repository.save()
             for branch in DEFAULT_BRANCHES:
                 branch = DGitBranch.objects.create(name=branch,repository=repository,owner=self.request.user,is_root=True)
+                commit = DGitCommit.objects.create(
+                            message='Initial Commit',
+                            owner=self.request.user,
+                            branch=branch
+                        )
+                REPO_PARENT_DIRECTORY = f'{BASE_DIR.parent}/{DGIT_DATA_PATH}/repositories/{self.request.user.username}/{repository.object_id}'
+                if not os.path.isdir(REPO_PARENT_DIRECTORY):
+                    os.makedirs(REPO_PARENT_DIRECTORY)
+                for file in DEFAULT_FILES:
+                    with open(f'{REPO_PARENT_DIRECTORY}/{file}','wb+') as f:
+                        f.write(b'')
+                        dgit_file = DGitFile.objects.create(
+                                        name=file,
+                                        owner=self.request.user,
+                                        path=f'repositories/{self.request.user.username}/{repository.object_id}/{file}',
+                                        commit=commit
+                                    )
             data['status'] = True
             data['message'] = MESSAGE.get('created')
 
@@ -197,12 +217,15 @@ class RepositoryCloneView(APIView):
         #
         #     repository = DGitRepository.objects.filter(object_id=object_id).first()
         #     files = DGitRepositoryFile.objects.get(repository=repository)
-
+            clone_token = request.META['HTTP_AUTHORIZATION']
+            clone_token = CloneToken.objects.get(token=clone_token)
+            repository = clone_token.repository
             data['status'] = True
             data['message'] = 'Authorized'
+            data['data'] = {'repository':repository.object_id,'name': repository.name}
             # data['data'] =
         except Exception as e:
-            print(e)
+            traceback.print_exc(e)
             data['status'] = False
             data['message'] = MESSAGE.get('something_wrong')
         return Response(data=data)

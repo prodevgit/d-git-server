@@ -2,7 +2,6 @@ from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
 from dgit.models import DGitRepository, DGitBranch
-from ssh.models import UserSSH
 
 
 class RepositoryCreateSerializer(ModelSerializer):
@@ -10,7 +9,6 @@ class RepositoryCreateSerializer(ModelSerializer):
     class Meta:
         model = DGitRepository
         exclude = ['members','policy','owner']
-
 
 class RepositoryDetailSerializer(ModelSerializer):
 

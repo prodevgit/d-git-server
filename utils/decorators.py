@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from rest_framework.response import Response
 
+from access_control.models import CloneToken
 from ssh.models import SSHToken
 
 
@@ -25,13 +26,9 @@ def repo_auth(function):
     @wraps(function)
     def wrap(request, *args, **kwargs):
         token = request.META['HTTP_AUTHORIZATION']
-        clone_by = request.GET.get('clone_by')
-        if clone_by == 'ssh':
-            ssh_token = SSHToken.objects.filter(token=token,is_valid=True).first()
-            if ssh_token:
-                return function(request, *args, **kwargs)
-            else:
-                return HttpResponseRedirect(reverse('api:repository-unauthorized-clone-api'))
+        clone_token = CloneToken.objects.filter(token=token,is_valid=True).first()
+        if clone_token:
+            return function(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse('api:repository-unauthorized-clone-api'))
 

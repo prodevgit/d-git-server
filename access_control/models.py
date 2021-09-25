@@ -10,7 +10,6 @@ from django.db import models
 #     (4, 'Delete')
 # )
 
-
 REPOSITORY_ROLES = (
     (1, 'Owner'),
     (2, 'Manager'),
@@ -54,3 +53,11 @@ class RepositoryInvite(models.Model):
     repository = models.CharField(max_length=50)
     created = models.DateTimeField(auto_now_add=True, blank=True)
     expired = models.BooleanField(default=False)
+
+class CloneToken(models.Model):
+    token = models.UUIDField(unique=True, editable=False,
+                                 default=uuid.uuid4)
+    is_valid = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True)
+    repository = models.ForeignKey('dgit.DGitRepository', on_delete=models.CASCADE,
+                              related_name="%(app_label)s_%(class)s_repository", null=True)

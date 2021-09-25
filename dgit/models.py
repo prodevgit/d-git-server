@@ -53,7 +53,7 @@ class DGitCommit(models.Model):
                                     db_index=True, on_delete=models.CASCADE)
     blobs = models.ManyToManyField('DGitBlob')
     prev_commit = models.ForeignKey('DGitCommit', related_name='%(app_label)s_%(class)s_prev_commit',
-                                    db_index=True, on_delete=models.CASCADE)
+                                    db_index=True, on_delete=models.CASCADE,default=None,blank=True,null=True)
 
 class DGitBranch(models.Model):
     object_id = models.UUIDField(unique=True, editable=False,

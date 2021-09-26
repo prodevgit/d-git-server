@@ -1,7 +1,8 @@
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
-from dgit.models import DGitBranch
+from api.v1.views.commit.serializer import CloneCommitSerializer
+from dgit.models import DGitBranch, DGitCommit
 
 
 class DGitBranchCreateSerializer(ModelSerializer):
@@ -66,3 +67,18 @@ class DGitBranchDetailSerializer(ModelSerializer):
     class Meta:
         model = DGitBranch
         exclude = ['repository']
+
+class CloneBranchSerializer(ModelSerializer):
+    commits = SerializerMethodField()
+
+    def get_commits(self,branch):
+        data = {}
+        commits = DGitCommit.objects.filter(branch=branch)
+        for commit in commits:
+            data[str(commit.object_id)] = CloneCommitSerializer(commit,context={'request':self.context['request']}).data
+        return data
+
+    class Meta:
+        model = DGitBranch
+        fields = ['name','object_id','parent','default','commits']
+

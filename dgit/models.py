@@ -65,6 +65,7 @@ class DGitBranch(models.Model):
     repository = models.ForeignKey('DGitRepository', on_delete=models.CASCADE,related_name="%(app_label)s_%(class)s_repository")
     name = models.TextField()
     is_root = models.BooleanField(default=False)
+    default = models.BooleanField(default=False)
     merge_status = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True, blank=True)
     history = HistoricalRecords()

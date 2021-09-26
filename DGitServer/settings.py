@@ -109,6 +109,8 @@ EMAIL_HOST_PASSWORD = env('EMAIL_PASS')
 FROM_EMAIL = 'DGit <no-reply@dgit.dev>'
 EMAIL_TEMPLATE = BASE_DIR / 'email/templates'
 
+PROTOCOL = env('PROTOCOL')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

@@ -5,6 +5,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
@@ -14,6 +15,7 @@ from rest_framework.views import APIView
 from DGitServer.constants import DGIT_DATA_PATH
 from DGitServer.settings import BASE_DIR
 from access_control.models import Policy, RepositoryPermission, Role, RepositoryInvite, CloneToken
+from api.v1.views.branch.serializer import CloneBranchSerializer
 from api.v1.views.repository.serializer import RepositoryCreateSerializer, RepositoryListSerializer, \
     RepositoryDetailSerializer
 from dgit.constants import ROLE_OWNER, ROLE_DEVELOPER
@@ -23,7 +25,7 @@ from utils.decorators import repo_auth
 from utils.functions import send_email
 from utils.messages import MESSAGE
 
-DEFAULT_BRANCHES = ('master','develop')
+DEFAULT_BRANCHES = ({'name':'master','default':False},{'name':'develop','default':True})
 DEFAULT_FILES = ('.dgitignore','readme.md')
 class RepositoryCreateView(CreateAPIView):
     serializer_class = RepositoryCreateSerializer
@@ -55,7 +57,7 @@ class RepositoryCreateView(CreateAPIView):
             repository.policy = policy
             repository.save()
             for branch in DEFAULT_BRANCHES:
-                branch = DGitBranch.objects.create(name=branch,repository=repository,owner=self.request.user,is_root=True)
+                branch = DGitBranch.objects.create(name=branch['name'],repository=repository,owner=self.request.user,is_root=True,default=branch['default'])
                 commit = DGitCommit.objects.create(
                             message='Initial Commit',
                             owner=self.request.user,
@@ -204,30 +206,25 @@ class RepositoryCloneView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = {}
+
         try:
-            # ssh_token = request.META['HTTP_AUTHORIZATION']
-            # ssh_token = SSHToken.objects.get(token=ssh_token)
-            # ssh_token.is_valid = False
-            # ssh_token.save()
-        #     object_id = kwargs.get('object_id')
-        #     try:
-        #         ssh_token = SSHToken.objects.get(token=ssh_token)
-        #     except:
-        #         return Response("You're not authorized to clone this repository")
-        #
-        #     repository = DGitRepository.objects.filter(object_id=object_id).first()
-        #     files = DGitRepositoryFile.objects.get(repository=repository)
             clone_token = request.META['HTTP_AUTHORIZATION']
             clone_token = CloneToken.objects.get(token=clone_token)
             repository = clone_token.repository
+            branches = DGitBranch.objects.filter(repository=repository)
+            default_branch = branches.filter(default=True).first()
+            clone_data = {}
+            clone_data['repository'] = repository.object_id
+            clone_data['name']= repository.name
+            clone_data['objects_count'] = DGitFile.objects.filter(commit__branch__repository=repository).count()
+            clone_data['default'] = {'name':default_branch.name,'object_id':default_branch.object_id}
+            clone_data['data'] = CloneBranchSerializer(branches,many=True,context={'request':self.request}).data
             data['status'] = True
-            data['message'] = 'Authorized'
-            data['data'] = {'repository':repository.object_id,'name': repository.name}
-            # data['data'] =
+            data['data'] = clone_data
         except Exception as e:
-            traceback.print_exc(e)
+            print(e)
             data['status'] = False
-            data['message'] = MESSAGE.get('something_wrong')
+            data['message'] = "You're not authorized to clone this repository"
         return Response(data=data)
 
 
@@ -298,4 +295,24 @@ class RepositoryUnauthorizedCloneView(APIView):
         data['status'] = False
         data['message'] = "You don't have access to this repository"
         return Response(data=data)
+
+class RepositoryObjectDownloadView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    @method_decorator(repo_auth)
+    def dispatch(self, *args, **kwargs):
+        return super(RepositoryObjectDownloadView, self).dispatch(*args, **kwargs)
+
+    def get(self,request):
+        object = DGitFile.objects.filter(object_id=request.GET.get('ref')).first()
+        filename = object.name
+        import mimetypes
+        filepath = f'{BASE_DIR.parent}/{DGIT_DATA_PATH}/{object.path}'
+        print(filepath)
+        fl = open(filepath, 'rb')
+        mime_type, _ = mimetypes.guess_type(filepath)
+        response = HttpResponse(fl, content_type=mime_type)
+        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        return response
 

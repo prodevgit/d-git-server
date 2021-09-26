@@ -15,7 +15,7 @@ urlpatterns = [
     path('repository/clone', views.RepositoryCloneView.as_view(), name='repository-clone-api'),
     path('repository/push', views.RepositoryPushView.as_view(), name='repository-push-api'),
     path('repository/unauthorized-clone', views.RepositoryUnauthorizedCloneView.as_view(), name='repository-unauthorized-clone-api'),
-
+    path('repository/get-object', views.RepositoryObjectDownloadView.as_view(), name='repository-object-download-api'),
     path('ssh/addkey',views.UserAddSSHKeyView.as_view(), name='ssh-add-key-api'),
     path('ssh/server-command-retreive',views.SSHServerCommandView.as_view(), name='ssh-command-retrieval-api'),
 

@@ -11,8 +11,13 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import login as django_login
+from rest_framework.views import APIView
+
+from DGitServer.constants import SSH_AUTHORIZED_KEYS
 from api.v1.views.auth.functions import create_token
 from api.v1.views.auth.serializer import LoginSerializer
+from ssh.models import UserSSH
+
 
 class UserCreateView(GenericAPIView):
 
@@ -25,7 +30,6 @@ class UserCreateView(GenericAPIView):
 
 
 class LoginView(GenericAPIView):
-
     permission_classes = (AllowAny,)
     serializer_class = LoginSerializer
     token_model = Token
@@ -112,3 +116,22 @@ class LoginView(GenericAPIView):
             response = Response(context, status=status.HTTP_404_NOT_FOUND)
 
         return response
+
+class TokenBySSHView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self,request):
+        data = {}
+        ssh_key = request.data.get('key')
+        print(ssh_key)
+        print(UserSSH.objects.all())
+        user_ssh = UserSSH.objects.filter(key=ssh_key).first()
+        if user_ssh:
+            data['status'] = True
+            data['token'] = Token.objects.get(user=user_ssh.owner).key
+        else:
+            data['status'] = False
+            data['message'] = 'Cannot authenticate with provided ssh key'
+        return Response(data=data)
+
+

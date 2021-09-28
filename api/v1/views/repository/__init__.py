@@ -26,7 +26,7 @@ from utils.functions import send_email
 from utils.messages import MESSAGE
 
 DEFAULT_BRANCHES = ({'name':'master','default':False},{'name':'develop','default':True})
-DEFAULT_FILES = ('.dgitignore','readme.md')
+DEFAULT_FILES = ('.dgitignore','readme.md','auth/','testing/','api/v1/testbranch/views.py')
 class RepositoryCreateView(CreateAPIView):
     serializer_class = RepositoryCreateSerializer
 
@@ -63,18 +63,30 @@ class RepositoryCreateView(CreateAPIView):
                             owner=self.request.user,
                             branch=branch
                         )
-                REPO_PARENT_DIRECTORY = f'{BASE_DIR.parent}/{DGIT_DATA_PATH}/repositories/{self.request.user.username}/{repository.object_id}'
+                REPO_PARENT_DIRECTORY = f'{BASE_DIR.parent}/{DGIT_DATA_PATH}/repositories/{self.request.user.username}/{repository.object_id}/{branch.name}'
                 if not os.path.isdir(REPO_PARENT_DIRECTORY):
                     os.makedirs(REPO_PARENT_DIRECTORY)
                 for file in DEFAULT_FILES:
-                    with open(f'{REPO_PARENT_DIRECTORY}/{file}','wb+') as f:
-                        f.write(b'')
-                        dgit_file = DGitFile.objects.create(
-                                        name=file,
-                                        owner=self.request.user,
-                                        path=f'repositories/{self.request.user.username}/{repository.object_id}/{file}',
-                                        commit=commit
-                                    )
+                    if '/' in file:
+                        print(file)
+                        print(os.path.isdir(f'{REPO_PARENT_DIRECTORY}/{file}'))
+                        if not os.path.isdir(f'{REPO_PARENT_DIRECTORY}/{file}'):
+                            dir = file.rsplit('/',1)[0]
+                            print(f'{REPO_PARENT_DIRECTORY}/{dir}')
+                            os.makedirs(f'{REPO_PARENT_DIRECTORY}/{dir}')
+                    try:
+                        with open(f'{REPO_PARENT_DIRECTORY}/{file}','wb+') as f:
+                            f.write(b'')
+                            dgit_file = DGitFile.objects.create(
+                                            name=file,
+                                            owner=self.request.user,
+                                            path=f'repositories/{self.request.user.username}/{repository.object_id}/{file}',
+                                            commit=commit
+                                        )
+                    except IsADirectoryError as e:
+                        print(e)
+                    # except FileExistsError as e:
+                    #     print(e)
             data['status'] = True
             data['message'] = MESSAGE.get('created')
 
@@ -229,6 +241,13 @@ class RepositoryCloneView(APIView):
 
 
 class RepositoryPushView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    @method_decorator(repo_auth)
+    def dispatch(self, *args, **kwargs):
+        return super(RepositoryPushView, self).dispatch(*args, **kwargs)
+
     def post(self, request,*args,**kwargs):
         data = {}
         try:

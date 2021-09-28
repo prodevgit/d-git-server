@@ -52,6 +52,7 @@ class DGitBranchCreateView(CreateAPIView):
         data = self.perform_create(serializer)
         return Response(data=data)
 
+
 class DGitBranchDetailView(RetrieveAPIView):
     queryset = DGitBranch.objects.order_by('id').all()
     serializer_class = DGitBranchDetailSerializer
